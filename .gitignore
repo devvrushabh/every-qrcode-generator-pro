@@ -41,6 +41,8 @@ supabase/.temp/
 .agents/
 .netlify/
 skills-lock.json
+.artifacts/
+**/.artifacts/
 
 # Mobile App build artifacts & local properties
 .gradle/

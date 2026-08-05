@@ -1,50 +1,50 @@
 # Every QRCode Generator Pro - Android Mobile App 📱
 
-This directory contains the production-ready Android mobile application project for **Every QRCode Generator Pro**.
+This directory contains the production-ready, **Google Play Store publishable** Android application project for **Every QRCode Generator Pro**.
 
-## 📁 Directory Overview
+## 📁 Key Output Files Ready for Deployment
 
-- **`android/`**: Complete native Android Studio project source (Gradle build files, Java/Kotlin source code, AndroidManifest, resources, layouts).
-- **`dist/`**: Bundled web distribution assets synced from the main React/Vite SaaS application.
-- **`capacitor.config.json`**: Capacitor cross-platform configuration file.
-
----
-
-## 🛠️ Requirements & Prerequisites
-
-To build and run the Android app locally:
-- **Android Studio** (Hedgehog / Iguana / Jellyfish or newer)
-- **Android SDK** API Level 34 (Android 14) or API Level 33 (Android 13)
-- **Java Development Kit (JDK)** version 17 or higher
-- **Gradle** 8.x
+- **`EveryQRCodeGeneratorPro-release.aab`** (2.77 MB): **Google Play Store App Bundle** format. This is the exact file required to upload to the Google Play Console for production release.
+- **`EveryQRCodeGeneratorPro-release.apk`** (2.49 MB): Signed, R8-optimized production release APK for direct side-loading.
+- **`android/`**: Complete native Android Studio project source (Gradle build scripts, Java/Kotlin source, R8 ProGuard rules, signed Keystore config, network security rules).
 
 ---
 
-## 🚀 How to Build & Run the Android App
+## 🛠️ Google Play Store Publishing Specs
 
-### Option A: Using Android Studio (Recommended)
-1. Open **Android Studio**.
-2. Click **Open** and select the `mobile app/android` directory:
-   `d:\Coding\Antigravity Projects\Every QRCode Generator Pro\mobile app\android`
-3. Wait for Gradle to finish syncing project dependencies.
-4. Connect a physical Android phone via USB (with USB Debugging enabled) or start an Android Emulator from the AVD Manager.
-5. Click the green **Run (Play)** button or press `Shift + F10`.
+- **Target SDK**: API 34 (Android 14 - compliant with Google Play Console requirements)
+- **Min SDK**: API 22 (Android 5.1+)
+- **Package Name**: `com.everyqrcodegenerator.app`
+- **Version**: `1.0.0` (Version Code: `1`)
+- **Code Optimization**: R8 / ProGuard enabled with resource shrinking (`minifyEnabled true`, `shrinkResources true`).
+- **Network Security**: Enforces HTTPS with `network_security_config.xml`.
 
-### Option B: Build APK via Command Line
-Run the Gradle wrapper inside the `android` folder:
+---
+
+## 🔑 Keystore & Signing Configuration
+
+The release build is signed using a production Keystore configured in `android/app/release.keystore` and `android/gradle.properties`:
+
+- **Keystore File**: `android/app/release.keystore`
+- **Key Alias**: `release-key`
+- **Store Password**: `androidrelease`
+- **Key Password**: `androidrelease`
+
+---
+
+## 🚀 How to Build via Android Studio or Terminal
+
+### Option A: Using Android Studio
+1. Launch **Android Studio**.
+2. Select **Open** and choose the `mobile app/android` folder.
+3. To generate a new Google Play App Bundle (`.aab`):
+   - Navigate to **Build** > **Generate Signed Bundle / APK...**
+   - Select **Android App Bundle** > **Next**.
+   - Use the existing `release.keystore` or create a new key.
+
+### Option B: Using Terminal Command Line
+To re-compile the signed `.aab` and `.apk` files at any time:
 ```bash
 cd "mobile app/android"
-./gradlew assembleDebug
+./gradlew bundleRelease assembleRelease
 ```
-The generated APK file will be located at:
-`mobile app/android/app/build/outputs/apk/debug/app-debug.apk`
-
----
-
-## 📱 Features & Permissions Included
-
-- **Full Touch & Web UI Optimization**: Supports responsive views, dark mode, dynamic QR code generation, and analytics dashboards.
-- **Permissions**:
-  - `INTERNET` & `ACCESS_NETWORK_STATE`: Live backend communication with Supabase.
-  - `CAMERA`: QR Code scanning & logo upload support.
-  - `WRITE_EXTERNAL_STORAGE` / `READ_EXTERNAL_STORAGE`: Direct download of generated QR code images (PNG, SVG, JPEG).
