@@ -1,0 +1,79 @@
+// Prisma Schema for QRCraft SaaS
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  avatarUrl    String?
+  role         String     @default("USER")     // USER, ADMIN
+  plan         String     @default("FREE")     // FREE, PRO, BUSINESS
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  folders      Folder[]
+  qrCodes      QRCode[]
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  qrCodes   QRCode[]
+}
+
+model QRCode {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId          String?
+  folder            Folder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  name              String
+  type              String    // URL, TEXT, EMAIL, PHONE, SMS, VCARD, WIFI, LOCATION, etc.
+  mode              String    @default("STATIC") // STATIC, DYNAMIC
+  shortCode         String    @unique
+  destinationUrl    String?
+  contentJson       String    // Serialized JSON of payload config
+  customizationJson String    // Serialized JSON of colors, eye shapes, logo, etc.
+  status            String    @default("ACTIVE") // ACTIVE, PAUSED, ARCHIVED
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  scans             Scan[]
+
+  @@index([shortCode])
+  @@index([userId])
+  @@index([folderId])
+}
+
+model Scan {
+  id         String   @id @default(uuid())
+  qrCodeId   String
+  qrCode     QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+
+  timestamp  DateTime @default(now())
+  ipHash     String?
+  country    String?
+  city       String?
+  deviceType String?  // Desktop, Mobile, Tablet
+  os         String?  // Windows, iOS, Android, macOS, Linux
+  browser    String?  // Chrome, Safari, Firefox, Edge
+  referrer   String?
+
+  @@index([qrCodeId])
+  @@index([timestamp])
+}
