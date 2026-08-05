@@ -29,7 +29,7 @@ uploads/*
 !uploads/.gitkeep
 supabase/.temp/
 
-# IDE / System / Agent files
+# IDE / System / Agent / Service files
 .DS_Store
 *.suo
 *.ntvs*
@@ -39,4 +39,11 @@ supabase/.temp/
 .idea/
 .vscode/
 .agents/
+.netlify/
 skills-lock.json
+
+# Mobile App build artifacts
+.gradle/
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
