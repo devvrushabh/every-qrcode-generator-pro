@@ -39,7 +39,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig (project.findProperty("RELEASE_STORE_PASSWORD") || System.getenv("KEYSTORE_PASSWORD") ? signingConfigs.release : signingConfigs.debug)
+            signingConfig (System.getenv("KEYSTORE_PASSWORD") ? signingConfigs.release : signingConfigs.debug)
         }
     }
 
