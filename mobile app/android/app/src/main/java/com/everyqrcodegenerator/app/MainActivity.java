@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -90,16 +91,31 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         try {
             WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to set decor fits system windows", e);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to set decor fits system windows", t);
         }
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        try {
+            setContentView(R.layout.activity_main);
+        } catch (Throwable t) {
+            Log.e(TAG, "Fatal layout inflation error in onCreate", t);
+            Toast.makeText(this, "System error initializing app layout", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
 
         splashContainer = findViewById(R.id.splash_container);
         errorContainer = findViewById(R.id.error_container);
-        webView = findViewById(R.id.webview);
+
+        try {
+            webView = findViewById(R.id.webview);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to initialize WebView component", t);
+            showOfflineError();
+            return;
+        }
 
         // Start splash glow animation
         startSplashAnimation();
@@ -155,8 +171,8 @@ public class MainActivity extends AppCompatActivity {
                 Animation pulseAnim = AnimationUtils.loadAnimation(this, R.anim.glow_pulse);
                 glowRing.startAnimation(pulseAnim);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error starting splash animation", e);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error starting splash animation", t);
         }
     }
 
@@ -164,29 +180,38 @@ public class MainActivity extends AppCompatActivity {
     private void setupWebView() {
         if (webView == null) return;
 
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setAllowFileAccess(true);
-        settings.setAllowContentAccess(true);
-        settings.setAllowFileAccessFromFileURLs(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        try {
+            WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setDomStorageEnabled(true);
+            settings.setDatabaseEnabled(true);
+            settings.setAllowFileAccess(true);
+            settings.setAllowContentAccess(true);
+            settings.setAllowFileAccessFromFileURLs(true);
+            settings.setAllowUniversalAccessFromFileURLs(true);
+            settings.setLoadWithOverviewMode(true);
+            settings.setUseWideViewPort(true);
+            settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
-        String defaultUA = settings.getUserAgentString();
-        settings.setUserAgentString(defaultUA + " EveryQRCodeGeneratorPro/1.0.0");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            }
+            settings.setMediaPlaybackRequiresUserGesture(false);
+            settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+            String defaultUA = settings.getUserAgentString();
+            settings.setUserAgentString(defaultUA + " EveryQRCodeGeneratorPro/1.0.0");
+        } catch (Throwable t) {
+            Log.e(TAG, "Error configuring WebSettings", t);
+        }
 
         try {
             CookieManager.getInstance().setAcceptCookie(true);
-            CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to set cookie manager parameters", e);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to set cookie manager parameters", t);
         }
 
         webView.setWebViewClient(new WebViewClient() {
@@ -220,7 +245,6 @@ public class MainActivity extends AppCompatActivity {
                 if (request == null || request.getUrl() == null) return false;
                 String url = request.getUrl().toString();
 
-                // Keep internal app navigation and auth providers inside WebView
                 if (url.contains("every-qrcode-generator-pro.netlify.app") ||
                         url.contains("supabase.co") ||
                         url.contains("accounts.google.com") ||
@@ -229,15 +253,14 @@ public class MainActivity extends AppCompatActivity {
                     return false;
                 }
 
-                // Handle external links safely without crashing
                 try {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     startActivity(intent);
                 } catch (ActivityNotFoundException e) {
                     Log.e(TAG, "No activity found to handle external URL: " + url, e);
                     Toast.makeText(MainActivity.this, "No browser app found to open link", Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    Log.e(TAG, "Error opening external link: " + url, e);
+                } catch (Throwable t) {
+                    Log.e(TAG, "Error opening external link: " + url, t);
                 }
                 return true;
             }
@@ -262,15 +285,15 @@ public class MainActivity extends AppCompatActivity {
                         fallbackIntent.setType("*/*");
                         fallbackIntent.addCategory(Intent.CATEGORY_OPENABLE);
                         fileChooserLauncher.launch(Intent.createChooser(fallbackIntent, "Select File"));
-                    } catch (Exception ex) {
+                    } catch (Throwable ex) {
                         Log.e(TAG, "Failed to launch fallback file chooser", ex);
                         if (fileUploadCallback != null) {
                             fileUploadCallback.onReceiveValue(null);
                             fileUploadCallback = null;
                         }
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error launching file chooser", e);
+                } catch (Throwable t) {
+                    Log.e(TAG, "Error launching file chooser", t);
                     if (fileUploadCallback != null) {
                         fileUploadCallback.onReceiveValue(null);
                         fileUploadCallback = null;
@@ -285,8 +308,8 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     try {
                         request.grant(request.getResources());
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error granting WebView permissions", e);
+                    } catch (Throwable t) {
+                        Log.e(TAG, "Error granting WebView permissions", t);
                     }
                 });
             }
@@ -301,8 +324,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, "Loading local bundled fallback asset");
                     webView.loadUrl(LOCAL_URL);
                 }
-            } catch (Exception e) {
-                Log.e(TAG, "Error loading local asset fallback", e);
+            } catch (Throwable t) {
+                Log.e(TAG, "Error loading local asset fallback", t);
                 showOfflineError();
             }
         });
@@ -314,8 +337,8 @@ public class MainActivity extends AppCompatActivity {
                     != PackageManager.PERMISSION_GRANTED) {
                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error requesting camera permission", e);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error requesting camera permission", t);
         }
     }
 
@@ -328,8 +351,8 @@ public class MainActivity extends AppCompatActivity {
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
-        } catch (Exception e) {
-            Log.e(TAG, "Error checking network availability", e);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error checking network availability", t);
             return true;
         }
     }
@@ -372,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
                         .setDuration(400)
                         .withEndAction(() -> splashContainer.setVisibility(View.GONE))
                         .start();
-            } catch (Exception e) {
+            } catch (Throwable t) {
                 splashContainer.setVisibility(View.GONE);
             }
         });
