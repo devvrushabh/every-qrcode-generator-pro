@@ -41,7 +41,7 @@
             android:textColor="@color/splash_text"
             android:textSize="16sp" />
 
-        <com.google.android.material.button.MaterialButton
+        <Button
             android:id="@+id/retry_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -67,13 +67,13 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <!-- App Logo + Animated Glowing Halo Frame -->
+            <!-- App Logo + Glowing Halo Frame -->
             <FrameLayout
                 android:layout_width="240dp"
                 android:layout_height="240dp"
                 android:layout_gravity="center">
 
-                <!-- Animated Pulsing Glowing Halo -->
+                <!-- Glowing Halo -->
                 <ImageView
                     android:id="@+id/glow_ring"
                     android:layout_width="240dp"
@@ -82,7 +82,7 @@
                     android:src="@drawable/glow_circle"
                     android:contentDescription="Glow Effect" />
 
-                <!-- Large Centered Modern App Icon -->
+                <!-- Centered Modern App Icon -->
                 <ImageView
                     android:id="@+id/splash_logo"
                     android:layout_width="140dp"

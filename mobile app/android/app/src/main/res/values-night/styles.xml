@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark Theme (Material3) -->
-    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+    <!-- Dark Theme (MaterialComponents) -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">#8B7BFF</item>
         <item name="colorPrimaryVariant">#6451F8</item>
         <item name="colorOnPrimary">#1A1A2E</item>

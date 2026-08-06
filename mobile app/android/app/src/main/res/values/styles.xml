@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base Application Theme (Material3) -->
-    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
+    <!-- Base Application Theme (MaterialComponents) -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">#6451F8</item>
         <item name="colorPrimaryVariant">#4F37E9</item>
         <item name="colorOnPrimary">@android:color/white</item>
@@ -21,7 +21,7 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
-    <!-- Fullscreen WebView theme (no action bar, edge-to-edge) -->
+    <!-- Fullscreen WebView theme -->
     <style name="AppTheme.NoActionBar" parent="AppTheme">
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
