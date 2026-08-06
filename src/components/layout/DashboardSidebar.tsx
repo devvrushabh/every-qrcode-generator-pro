@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useProfile } from '../../hooks/useProfile';
+import { ThemeToggle } from '../ui/ThemeToggle';
 import {
   LayoutDashboard,
   QrCode,
@@ -64,6 +65,11 @@ export const DashboardSidebar: React.FC = () => {
 
       {/* User Profile Card Footer */}
       <div className="pt-6 border-t border-slate-200 dark:border-slate-800 px-2 space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Theme</span>
+          <ThemeToggle size="sm" />
+        </div>
+
         <div className="flex items-center gap-3 p-2 rounded-2xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
           {profile?.avatar_url ? (
             <img

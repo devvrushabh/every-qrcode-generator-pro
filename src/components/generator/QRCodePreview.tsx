@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { QRCustomization, QRModeType } from '../../types/qr';
 import { createQRCodeInstance, downloadQRCode } from '../../lib/qr-generator';
 import { SafetyWarningBanner } from './SafetyWarningBanner';
+import { SocialShareModal } from './SocialShareModal';
 import { Button } from '../ui/Button';
-import { Download, Sparkles, Zap, Shield, Check, FileDown, Layers } from 'lucide-react';
+import { Download, Sparkles, Zap, Shield, Check, FileDown, Layers, Share2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface QRCodePreviewProps {
@@ -28,6 +29,7 @@ export const QRCodePreview: React.FC<QRCodePreviewProps> = ({
   const [downloadFormat, setDownloadFormat] = useState<'png' | 'svg'>('png');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -154,7 +156,29 @@ export const QRCodePreview: React.FC<QRCodePreviewProps> = ({
             </Button>
           )}
         </div>
+
+        {/* Social Share Button placed below PNG download button */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full font-bold border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+            leftIcon={<Share2 className="w-5 h-5 text-[#6451F8]" />}
+            onClick={() => setIsShareModalOpen(true)}
+          >
+            Share QR Code
+          </Button>
+        </div>
+
+        <SocialShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          payloadText={payloadText}
+          customization={customization}
+          qrName={qrName}
+        />
       </div>
     </div>
   );
 };
+

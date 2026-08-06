@@ -4,7 +4,8 @@ import { useProfile } from '../../hooks/useProfile';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { User, Mail, Lock, Camera, Check, AlertCircle } from 'lucide-react';
+import { ThemeToggle } from '../../components/ui/ThemeToggle';
+import { User, Mail, Lock, Camera, Check, AlertCircle, Sun } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { user, updatePassword } = useAuth();
@@ -164,6 +165,23 @@ export const SettingsPage: React.FC = () => {
             </Button>
           </div>
         </form>
+      </Card>
+
+      {/* Appearance & Theme Section */}
+      <Card className="p-6 space-y-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+          <Sun className="w-5 h-5 text-[#6451F8]" /> Appearance & Theme
+        </h3>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Application Theme</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Choose between Light Mode, Dark Mode, or match your device System settings.
+            </p>
+          </div>
+          <ThemeToggle showLabels />
+        </div>
       </Card>
 
       {/* Security Section */}

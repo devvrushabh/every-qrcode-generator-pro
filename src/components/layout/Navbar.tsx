@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { QrCode, Sun, Moon, Laptop, Menu, X, Sparkles, LayoutDashboard, LogOut, AlertCircle } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { QrCode, Menu, X, Sparkles, LayoutDashboard, LogOut, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export const Navbar: React.FC = () => {
-  const { theme, setTheme } = useTheme();
   const { user, profile, isAuthenticated, isConfigured, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -72,29 +71,7 @@ export const Navbar: React.FC = () => {
         {/* Controls & Auth CTA */}
         <div className="hidden sm:flex items-center gap-3">
           {/* Theme Dropdown Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
-            <button
-              onClick={() => setTheme('light')}
-              className={`p-1.5 rounded-lg transition-colors ${theme === 'light' ? 'bg-white dark:bg-slate-800 text-amber-500 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              title="Light Mode"
-            >
-              <Sun className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setTheme('dark')}
-              className={`p-1.5 rounded-lg transition-colors ${theme === 'dark' ? 'bg-white dark:bg-slate-800 text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              title="Dark Mode"
-            >
-              <Moon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setTheme('system')}
-              className={`p-1.5 rounded-lg transition-colors ${theme === 'system' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-              title="System Theme"
-            >
-              <Laptop className="w-4 h-4" />
-            </button>
-          </div>
+          <ThemeToggle />
 
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
@@ -146,11 +123,13 @@ export const Navbar: React.FC = () => {
           )}
         </div>
 
-        {/* Mobile Hamburger Menu Toggle */}
+        {/* Mobile Controls & Hamburger Menu Toggle */}
         <div className="flex items-center gap-2 sm:hidden">
+          <ThemeToggle size="sm" />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900"
+            aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -183,6 +162,12 @@ export const Navbar: React.FC = () => {
               Pricing
             </Link>
           </nav>
+
+          {/* Mobile Theme Toggle Section */}
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Theme</span>
+            <ThemeToggle showLabels size="sm" />
+          </div>
 
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2">
             {isAuthenticated ? (

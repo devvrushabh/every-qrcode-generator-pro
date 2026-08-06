@@ -1,21 +1,35 @@
-# Google Play Store ProGuard & R8 Code Optimization Rules
+# ProGuard / R8 Rules for Every QRCode Generator Pro
+# -----------------------------------------------
 
-# Keep WebKit and JavaScript interfaces
--keepattributes JavascriptInterface
+# Keep the main Activity
+-keep class com.everyqrcodegenerator.app.MainActivity { *; }
+
+# WebView
+-keepclassmembers class * extends android.webkit.WebViewClient {
+    public void *(android.webkit.WebView, java.lang.String, android.graphics.Bitmap);
+    public boolean *(android.webkit.WebView, java.lang.String);
+    public void *(android.webkit.WebView, java.lang.String);
+}
+-keepclassmembers class * extends android.webkit.WebChromeClient {
+    public void *(android.webkit.WebView, java.lang.String, android.webkit.JsResult);
+}
+
+# Keep JavaScript interface methods
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
--keepclassmembers class fqcn.of.javascript.interface.for.webview {
-   public *;
-}
--keep class android.webkit.** { *; }
 
-# Keep MainActivity class
--keep class com.everyqrcodegenerator.app.MainActivity { *; }
+# AndroidX
+-dontwarn com.google.android.material.**
+-keep class com.google.android.material.** { *; }
+-dontwarn androidx.**
+-keep class androidx.** { *; }
+-keep interface androidx.** { *; }
 
-# Maintain line numbers for crash symbolication on Google Play Console
+# Keep R8 from stripping lifecycle observers
+-keep class * implements androidx.lifecycle.LifecycleObserver { *; }
+
+# Standard Android
+-keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable
-
-# Ignore Android Jetpack & WebView warnings during R8 minification
--dontwarn android.webkit.**
--dontwarn androidx.webkit.**
+-renamesourcefileattribute SourceFile

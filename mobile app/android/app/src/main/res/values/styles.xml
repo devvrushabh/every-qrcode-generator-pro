@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <!-- Base Application Theme (Material3) -->
+    <style name="AppTheme" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">#6451F8</item>
-        <item name="colorPrimaryDark">#4F37E9</item>
-        <item name="colorAccent">#6451F8</item>
+        <item name="colorPrimaryVariant">#4F37E9</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">#A855F7</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="android:statusBarColor">#6451F8</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+    <!-- Splash Screen Theme (extends AppTheme) -->
+    <style name="AppTheme.Splash" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Fullscreen WebView theme (no action bar, edge-to-edge) -->
+    <style name="AppTheme.NoActionBar" parent="AppTheme">
+        <item name="android:windowFullscreen">false</item>
     </style>
 </resources>

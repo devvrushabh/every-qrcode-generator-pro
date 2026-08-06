@@ -1,4 +1,6 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
 
 android {
     namespace "com.everyqrcodegenerator.app"
@@ -6,41 +8,49 @@ android {
 
     defaultConfig {
         applicationId "com.everyqrcodegenerator.app"
-        minSdk 22
+        minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Ensures generated APK/AAB has a readable filename
+        setProperty("archivesBaseName", "EveryQRCodeGeneratorPro-v${versionName}")
     }
 
     signingConfigs {
         release {
-            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
-                storeFile file(MYAPP_RELEASE_STORE_FILE)
-                storePassword MYAPP_RELEASE_STORE_PASSWORD
-                keyAlias MYAPP_RELEASE_KEY_ALIAS
-                keyPassword MYAPP_RELEASE_KEY_PASSWORD
-            }
+            // For CI/CD or local signing — point to your keystore.
+            // Store passwords in gradle.properties or environment variables, NEVER in source.
+            storeFile file('release.keystore')
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: project.findProperty("RELEASE_STORE_PASSWORD") ?: ""
+            keyAlias System.getenv("KEY_ALIAS") ?: project.findProperty("RELEASE_KEY_ALIAS") ?: ""
+            keyPassword System.getenv("KEY_PASSWORD") ?: project.findProperty("RELEASE_KEY_PASSWORD") ?: ""
         }
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            debuggable true
+        }
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
-                signingConfig signingConfigs.release
-            }
-        }
-        debug {
-            debuggable true
+            signingConfig (project.findProperty("RELEASE_STORE_PASSWORD") || System.getenv("KEYSTORE_PASSWORD") ? signingConfigs.release : signingConfigs.debug)
         }
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        viewBinding true
+        buildConfig true
     }
 
     bundle {
@@ -54,15 +64,43 @@ android {
             enableSplit = true
         }
     }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds true
+    }
+
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
+    // AndroidX Core
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.activity:activity:1.9.0'
+
+    // Material Design
+    implementation 'com.google.android.material:material:1.12.0'
+
+    // Layouts
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.webkit:webkit:1.10.0'
+
+    // WebView
+    implementation 'androidx.webkit:webkit:1.11.0'
+
+    // Lifecycle
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.8.2'
+    implementation 'androidx.lifecycle:lifecycle-process:2.8.2'
+
+    // Splash Screen API (Android 12+)
+    implementation 'androidx.core:core-splashscreen:1.0.1'
+
+    // Testing
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 }

@@ -1,13 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
 
     <!-- Primary App WebView -->
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- Offline / Error Screen -->
+    <LinearLayout
+        android:id="@+id/error_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/splash_background"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_app_logo"
+            android:contentDescription="App Icon" />
+
+        <TextView
+            android:id="@+id/error_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:fontFamily="sans-serif-medium"
+            android:text="No internet connection.\nPlease check your network and try again."
+            android:textColor="@color/splash_text"
+            android:textSize="16sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/retry_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:onClick="onRetryClick"
+            android:text="Retry"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <!-- Animated Dynamic Splash Screen Container -->
     <RelativeLayout
@@ -37,7 +79,8 @@
                     android:layout_width="240dp"
                     android:layout_height="240dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/glow_circle" />
+                    android:src="@drawable/glow_circle"
+                    android:contentDescription="Glow Effect" />
 
                 <!-- Large Centered Modern App Icon -->
                 <ImageView
@@ -46,7 +89,8 @@
                     android:layout_height="140dp"
                     android:layout_gravity="center"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_app_logo" />
+                    android:src="@drawable/ic_app_logo"
+                    android:contentDescription="Every QRCode Generator Pro Logo" />
             </FrameLayout>
 
             <!-- App Title -->

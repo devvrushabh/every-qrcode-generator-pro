@@ -41,8 +41,6 @@ supabase/.temp/
 .agents/
 .netlify/
 skills-lock.json
-.artifacts/
-**/.artifacts/
 
 # Mobile App build artifacts & local properties
 .gradle/
@@ -50,3 +48,10 @@ skills-lock.json
 **/android/build/
 **/android/app/build/
 **/android/local.properties
+
+# Signing keys (NEVER commit these!)
+*.keystore
+*.jks
+keystore.properties
+mobile app/.artifacts/
+

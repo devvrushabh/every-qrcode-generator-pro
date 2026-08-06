@@ -93,3 +93,22 @@ export async function downloadQRCode(
     extension: format,
   });
 }
+
+export async function getQRCodeBlob(
+  text: string,
+  customization: QRCustomization,
+  dimension: number = 1024
+): Promise<Blob | null> {
+  try {
+    const qrInstance = createQRCodeInstance(text, customization, dimension);
+    const rawData = await qrInstance.getRawData('png');
+    if (!rawData) return null;
+    if (rawData instanceof Blob) return rawData;
+    const uint8Array = new Uint8Array(rawData as any);
+    return new Blob([uint8Array], { type: 'image/png' });
+  } catch (error) {
+    console.error('Error extracting QR code blob:', error);
+    return null;
+  }
+}
+

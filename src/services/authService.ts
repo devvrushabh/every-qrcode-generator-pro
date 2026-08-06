@@ -62,7 +62,17 @@ export const authService = {
 
   async signInWithGoogle(): Promise<{ error?: string }> {
     try {
-      const redirectTo = `${window.location.origin}/dashboard`;
+      // Handle mobile WebView, Capacitor, and localhost environments
+      const origin = window.location.origin;
+      const isMobileHost = 
+        typeof (window as any).Capacitor !== 'undefined' ||
+        window.location.protocol === 'file:' ||
+        (window.location.hostname === 'localhost' && !window.location.port);
+
+      const redirectTo = isMobileHost
+        ? 'https://every-qrcode-generator-pro.netlify.app/dashboard'
+        : `${origin}/dashboard`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

@@ -1,80 +1,358 @@
 package com.everyqrcodegenerator.app;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.webkit.CookieManager;
+import android.webkit.PermissionRequest;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import androidx.appcompat.app.AppCompatActivity;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+
+/**
+ * Main Activity for Every QRCode Generator Pro.
+ * Loads the web app inside a full-screen WebView with a branded splash screen,
+ * robust error handling, camera permissions, file chooser, and deep link handling.
+ */
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "EveryQRCodeMainActivity";
+    private static final String APP_URL = "https://every-qrcode-generator-pro.netlify.app";
+    private static final int SPLASH_TIMEOUT_MS = 3500;
+
     private WebView webView;
     private View splashContainer;
+    private View errorContainer;
     private boolean splashDismissed = false;
+
+    // File upload handling
+    private ValueCallback<Uri[]> fileUploadCallback;
+    private final ActivityResultLauncher<Intent> fileChooserLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (fileUploadCallback == null) return;
+                Uri[] results = null;
+                try {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        String dataString = result.getData().getDataString();
+                        if (dataString != null) {
+                            results = new Uri[]{Uri.parse(dataString)};
+                        } else if (result.getData().getClipData() != null) {
+                            int count = result.getData().getClipData().getItemCount();
+                            results = new Uri[count];
+                            for (int i = 0; i < count; i++) {
+                                results[i] = result.getData().getClipData().getItemAt(i).getUri();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error handling file chooser result", e);
+                }
+                fileUploadCallback.onReceiveValue(results);
+                fileUploadCallback = null;
+            });
+
+    // Camera permission launcher
+    private final ActivityResultLauncher<String> cameraPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    Log.d(TAG, "Camera permission granted");
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        try {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to set decor fits system windows", e);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        webView = findViewById(R.id.webview);
         splashContainer = findViewById(R.id.splash_container);
+        errorContainer = findViewById(R.id.error_container);
+        webView = findViewById(R.id.webview);
 
-        View glowRing = findViewById(R.id.glow_ring);
-        if (glowRing != null) {
-            Animation pulseAnim = AnimationUtils.loadAnimation(this, R.anim.glow_pulse);
-            glowRing.startAnimation(pulseAnim);
+        // Start splash glow animation
+        startSplashAnimation();
+
+        // Request camera permission for QR scanner
+        requestCameraPermission();
+
+        // Setup WebView settings and clients
+        setupWebView();
+
+        // Determine URL to load (check for Deep Link / Intent data)
+        String targetUrl = getInitialUrl(getIntent());
+
+        if (isNetworkAvailable()) {
+            if (webView != null) {
+                webView.loadUrl(targetUrl);
+            }
+        } else {
+            showOfflineError();
         }
 
-        WebSettings webSettings = webView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setDatabaseEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setAllowContentAccess(true);
-        webSettings.setLoadWithOverviewMode(true);
-        webSettings.setUseWideViewPort(true);
-        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        // Safety fallback timer to ensure splash screen is dismissed
+        new Handler(Looper.getMainLooper()).postDelayed(this::dismissSplashWithFade, SPLASH_TIMEOUT_MS);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getData() != null) {
+            String url = intent.getData().toString();
+            Log.d(TAG, "Received new intent URL: " + url);
+            if (webView != null && isNetworkAvailable()) {
+                webView.loadUrl(url);
+            }
+        }
+    }
+
+    private String getInitialUrl(Intent intent) {
+        if (intent != null && intent.getData() != null) {
+            String intentUrl = intent.getData().toString();
+            if (intentUrl.startsWith("http://") || intentUrl.startsWith("https://")) {
+                return intentUrl;
+            }
+        }
+        return APP_URL;
+    }
+
+    private void startSplashAnimation() {
+        try {
+            View glowRing = findViewById(R.id.glow_ring);
+            if (glowRing != null) {
+                Animation pulseAnim = AnimationUtils.loadAnimation(this, R.anim.glow_pulse);
+                glowRing.startAnimation(pulseAnim);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting splash animation", e);
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void setupWebView() {
+        if (webView == null) return;
+
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        String defaultUA = settings.getUserAgentString();
+        settings.setUserAgentString(defaultUA + " EveryQRCodeGeneratorPro/1.0.0");
+
+        try {
+            CookieManager.getInstance().setAcceptCookie(true);
+            CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to set cookie manager parameters", e);
+        }
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                if (errorContainer != null) {
+                    errorContainer.setVisibility(View.GONE);
+                }
+            }
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 dismissSplashWithFade();
             }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request != null && request.isForMainFrame()) {
+                    showOfflineError();
+                }
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (request == null || request.getUrl() == null) return false;
+                String url = request.getUrl().toString();
+
+                // Keep internal app navigation and auth providers inside WebView
+                if (url.contains("every-qrcode-generator-pro.netlify.app") ||
+                        url.contains("supabase.co") ||
+                        url.contains("accounts.google.com") ||
+                        url.contains("google.com")) {
+                    return false;
+                }
+
+                // Handle external links safely without crashing
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    Log.e(TAG, "No activity found to handle external URL: " + url, e);
+                    Toast.makeText(MainActivity.this, "No browser app found to open link", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error opening external link: " + url, e);
+                }
+                return true;
+            }
         });
 
-        webView.loadUrl("https://every-qrcode-generator-pro.netlify.app");
-
-        // Fallback safety timer to dismiss splash screen after 2.5s maximum
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+        webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public void run() {
-                dismissSplashWithFade();
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> callback,
+                                             FileChooserParams params) {
+                if (fileUploadCallback != null) {
+                    fileUploadCallback.onReceiveValue(null);
+                }
+                fileUploadCallback = callback;
+
+                try {
+                    Intent intent = params != null ? params.createIntent() : new Intent(Intent.ACTION_GET_CONTENT).setType("*/*");
+                    fileChooserLauncher.launch(intent);
+                } catch (ActivityNotFoundException e) {
+                    Log.e(TAG, "File chooser activity not found, falling back to GET_CONTENT", e);
+                    try {
+                        Intent fallbackIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                        fallbackIntent.setType("*/*");
+                        fallbackIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                        fileChooserLauncher.launch(Intent.createChooser(fallbackIntent, "Select File"));
+                    } catch (Exception ex) {
+                        Log.e(TAG, "Failed to launch fallback file chooser", ex);
+                        if (fileUploadCallback != null) {
+                            fileUploadCallback.onReceiveValue(null);
+                            fileUploadCallback = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error launching file chooser", e);
+                    if (fileUploadCallback != null) {
+                        fileUploadCallback.onReceiveValue(null);
+                        fileUploadCallback = null;
+                    }
+                }
+                return true;
             }
-        }, 2500);
+
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                if (request == null) return;
+                runOnUiThread(() -> {
+                    try {
+                        request.grant(request.getResources());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error granting WebView permissions", e);
+                    }
+                });
+            }
+        });
+    }
+
+    private void requestCameraPermission() {
+        try {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error requesting camera permission", e);
+        }
+    }
+
+    private boolean isNetworkAvailable() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            if (cm == null) return false;
+            NetworkCapabilities caps = cm.getNetworkCapabilities(cm.getActiveNetwork());
+            return caps != null && (
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking network availability", e);
+            return true; // Default to true if check fails
+        }
+    }
+
+    private void showOfflineError() {
+        dismissSplashWithFade();
+        if (errorContainer != null) {
+            errorContainer.setVisibility(View.VISIBLE);
+            TextView errorText = errorContainer.findViewById(R.id.error_message);
+            if (errorText != null) {
+                errorText.setText("No internet connection.\nPlease check your network and try again.");
+            }
+        }
+    }
+
+    public void onRetryClick(View view) {
+        if (isNetworkAvailable()) {
+            if (errorContainer != null) {
+                errorContainer.setVisibility(View.GONE);
+            }
+            if (webView != null) {
+                webView.loadUrl(APP_URL);
+            }
+        } else {
+            Toast.makeText(this, "Still no internet connection", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void dismissSplashWithFade() {
         if (splashDismissed || splashContainer == null) return;
         splashDismissed = true;
 
-        splashContainer.animate()
-                .alpha(0f)
-                .setDuration(450)
-                .withEndAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        splashContainer.setVisibility(View.GONE);
-                    }
-                })
-                .start();
+        try {
+            splashContainer.animate()
+                    .alpha(0f)
+                    .setDuration(400)
+                    .withEndAction(() -> splashContainer.setVisibility(View.GONE))
+                    .start();
+        } catch (Exception e) {
+            splashContainer.setVisibility(View.GONE);
+        }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) {
@@ -82,5 +360,29 @@ public class MainActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.onResume();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (webView != null) {
+            webView.onPause();
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+        }
+        super.onDestroy();
     }
 }
