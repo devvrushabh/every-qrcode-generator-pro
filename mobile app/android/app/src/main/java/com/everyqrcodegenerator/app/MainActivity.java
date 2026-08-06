@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -31,26 +30,27 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 
 /**
  * Main Activity for Every QRCode Generator Pro.
- * Loads the web app inside a full-screen WebView with a branded splash screen,
- * robust error handling, camera permissions, file chooser, and deep link handling.
+ * Loads the web app inside a full-screen WebView with splash screen,
+ * robust offline fallbacks, camera permissions, file chooser, and deep link handling.
  */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "EveryQRCodeMainActivity";
-    private static final String APP_URL = "https://every-qrcode-generator-pro.netlify.app";
-    private static final int SPLASH_TIMEOUT_MS = 3500;
+    private static final String ONLINE_URL = "https://every-qrcode-generator-pro.netlify.app";
+    private static final String LOCAL_URL = "file:///android_asset/public/index.html";
+    private static final int SPLASH_TIMEOUT_MS = 3000;
 
     private WebView webView;
     private View splashContainer;
     private View errorContainer;
     private boolean splashDismissed = false;
+    private boolean isOfflineFallbackActive = false;
 
     // File upload handling
     private ValueCallback<Uri[]> fileUploadCallback;
@@ -113,12 +113,12 @@ public class MainActivity extends AppCompatActivity {
         // Determine URL to load (check for Deep Link / Intent data)
         String targetUrl = getInitialUrl(getIntent());
 
-        if (isNetworkAvailable()) {
-            if (webView != null) {
+        if (webView != null) {
+            if (isNetworkAvailable()) {
                 webView.loadUrl(targetUrl);
+            } else {
+                loadLocalAssetFallback();
             }
-        } else {
-            showOfflineError();
         }
 
         // Safety fallback timer to ensure splash screen is dismissed
@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.getData() != null) {
             String url = intent.getData().toString();
             Log.d(TAG, "Received new intent URL: " + url);
-            if (webView != null && isNetworkAvailable()) {
+            if (webView != null) {
                 webView.loadUrl(url);
             }
         }
@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                 return intentUrl;
             }
         }
-        return APP_URL;
+        return ONLINE_URL;
     }
 
     private void startSplashAnimation() {
@@ -170,10 +170,12 @@ public class MainActivity extends AppCompatActivity {
         settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
@@ -206,7 +208,10 @@ public class MainActivity extends AppCompatActivity {
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request != null && request.isForMainFrame()) {
-                    showOfflineError();
+                    Log.w(TAG, "Main frame error: " + (error != null ? error.getDescription() : "unknown"));
+                    if (!isOfflineFallbackActive) {
+                        loadLocalAssetFallback();
+                    }
                 }
             }
 
@@ -219,7 +224,8 @@ public class MainActivity extends AppCompatActivity {
                 if (url.contains("every-qrcode-generator-pro.netlify.app") ||
                         url.contains("supabase.co") ||
                         url.contains("accounts.google.com") ||
-                        url.contains("google.com")) {
+                        url.contains("google.com") ||
+                        url.startsWith("file:///android_asset/")) {
                     return false;
                 }
 
@@ -287,6 +293,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void loadLocalAssetFallback() {
+        runOnUiThread(() -> {
+            try {
+                isOfflineFallbackActive = true;
+                if (webView != null) {
+                    Log.d(TAG, "Loading local bundled fallback asset");
+                    webView.loadUrl(LOCAL_URL);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading local asset fallback", e);
+                showOfflineError();
+            }
+        });
+    }
+
     private void requestCameraPermission() {
         try {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -309,47 +330,52 @@ public class MainActivity extends AppCompatActivity {
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
         } catch (Exception e) {
             Log.e(TAG, "Error checking network availability", e);
-            return true; // Default to true if check fails
+            return true;
         }
     }
 
     private void showOfflineError() {
-        dismissSplashWithFade();
-        if (errorContainer != null) {
-            errorContainer.setVisibility(View.VISIBLE);
-            TextView errorText = errorContainer.findViewById(R.id.error_message);
-            if (errorText != null) {
-                errorText.setText("No internet connection.\nPlease check your network and try again.");
+        runOnUiThread(() -> {
+            dismissSplashWithFade();
+            if (errorContainer != null) {
+                errorContainer.setVisibility(View.VISIBLE);
+                TextView errorText = errorContainer.findViewById(R.id.error_message);
+                if (errorText != null) {
+                    errorText.setText("No internet connection.\nPlease check your network and try again.");
+                }
             }
-        }
+        });
     }
 
     public void onRetryClick(View view) {
+        isOfflineFallbackActive = false;
         if (isNetworkAvailable()) {
             if (errorContainer != null) {
                 errorContainer.setVisibility(View.GONE);
             }
             if (webView != null) {
-                webView.loadUrl(APP_URL);
+                webView.loadUrl(ONLINE_URL);
             }
         } else {
-            Toast.makeText(this, "Still no internet connection", Toast.LENGTH_SHORT).show();
+            loadLocalAssetFallback();
         }
     }
 
     private void dismissSplashWithFade() {
-        if (splashDismissed || splashContainer == null) return;
-        splashDismissed = true;
+        runOnUiThread(() -> {
+            if (splashDismissed || splashContainer == null) return;
+            splashDismissed = true;
 
-        try {
-            splashContainer.animate()
-                    .alpha(0f)
-                    .setDuration(400)
-                    .withEndAction(() -> splashContainer.setVisibility(View.GONE))
-                    .start();
-        } catch (Exception e) {
-            splashContainer.setVisibility(View.GONE);
-        }
+            try {
+                splashContainer.animate()
+                        .alpha(0f)
+                        .setDuration(400)
+                        .withEndAction(() -> splashContainer.setVisibility(View.GONE))
+                        .start();
+            } catch (Exception e) {
+                splashContainer.setVisibility(View.GONE);
+            }
+        });
     }
 
     @SuppressWarnings("deprecation")
