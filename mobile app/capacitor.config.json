@@ -17,7 +17,7 @@
       "launchShowDuration": 2000,
       "launchAutoHide": true,
       "backgroundColor": "#6451F8",
-      "androidSplashResourceName": "splash",
+      "androidSplashResourceName": "splash_background",
       "showSpinner": false
     }
   }

@@ -10,6 +10,7 @@
         <item name="android:statusBarColor">#6451F8</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
     <!-- Splash Screen Theme (extends AppTheme) -->
@@ -17,10 +18,12 @@
         <item name="android:windowBackground">@drawable/splash_background</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
     <!-- Fullscreen WebView theme (no action bar, edge-to-edge) -->
     <style name="AppTheme.NoActionBar" parent="AppTheme">
         <item name="android:windowFullscreen">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 </resources>
