@@ -13,12 +13,11 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
-    <!-- Official Android 12+ Splash Screen Theme -->
-    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_app_logo</item>
-        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    <!-- Official App Starting Theme -->
+    <style name="Theme.App.Starting" parent="AppTheme">
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
+
 
 
     <!-- Splash Screen Theme (extends AppTheme) -->

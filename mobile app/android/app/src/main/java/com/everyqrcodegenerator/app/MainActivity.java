@@ -33,8 +33,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.WindowCompat;
+
 
 /**
  * Main Activity for Every QRCode Generator Pro.
@@ -91,18 +91,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
-            SplashScreen.installSplashScreen(this);
-        } catch (Throwable t) {
-            Log.e(TAG, "Failed to initialize AndroidX SplashScreen", t);
-        }
-
-        try {
             WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         } catch (Throwable t) {
             Log.e(TAG, "Failed to set decor fits system windows", t);
         }
 
         super.onCreate(savedInstanceState);
+
 
 
         try {
