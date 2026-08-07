@@ -1,8 +1,24 @@
 {
-  "name": "every-qrcode-generator-pro-mobile",
+  "name": "@devvrushabh/every-qrcode-generator-pro-mobile",
   "version": "1.0.0",
   "description": "Android Mobile App for Every QRCode Generator Pro",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devvrushabh/every-qrcode-generator-pro.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "android/app/src",
+    "android/build.gradle",
+    "android/settings.gradle",
+    "capacitor.config.json",
+    "README.md"
+  ],
+
+
+
   "scripts": {
     "cap:sync": "cap sync android",
     "cap:open": "cap open android"

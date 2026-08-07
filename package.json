@@ -1,9 +1,28 @@
 {
-  "name": "qr-code-generator",
-  "version": "1.0.0",
+  "name": "@devvrushabh/every-qrcode-generator-pro",
+  "version": "1.0.1",
   "description": "Production-Ready QR Code Generator & Analytics SaaS",
+
   "type": "module",
   "main": "server/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devvrushabh/every-qrcode-generator-pro.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "src",
+    "server",
+    "prisma/schema.prisma",
+    "index.html",
+    "vite.config.ts",
+    "README.md"
+  ],
+
+
+
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
