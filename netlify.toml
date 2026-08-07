@@ -4,9 +4,12 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NPM_FLAGS = "--prefer-offline --no-audit"
+  CI = "true"
 
 # SPA routing fallback for React Router
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+

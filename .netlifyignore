@@ -1,0 +1,19 @@
+# Ignore mobile app codebase and Android build artifacts from Netlify file scanner
+mobile app/
+mobile-app/
+android/
+
+# Ignore backend server, database schemas, and file uploads
+server/
+prisma/
+uploads/
+
+# Ignore IDE configuration and git files
+.idea/
+.vscode/
+.git/
+
+# Ignore binary files and root markdown
+README.md
+*.apk
+*.aab
