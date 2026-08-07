@@ -90,7 +90,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+        try {
+            SplashScreen.installSplashScreen(this);
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to initialize AndroidX SplashScreen", t);
+        }
 
         try {
             WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
@@ -99,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.onCreate(savedInstanceState);
+
 
         try {
             setContentView(R.layout.activity_main);

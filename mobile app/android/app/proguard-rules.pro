@@ -26,6 +26,11 @@
 -keep class androidx.** { *; }
 -keep interface androidx.** { *; }
 
+# Keep Splash Screen API
+-keep class androidx.core.splashscreen.** { *; }
+-dontwarn androidx.core.splashscreen.**
+
+
 # Keep R8 from stripping lifecycle observers
 -keep class * implements androidx.lifecycle.LifecycleObserver { *; }
 
